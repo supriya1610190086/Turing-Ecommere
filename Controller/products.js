@@ -110,34 +110,37 @@ products_by_category_id = (req, res) => {
             this.on("product.product_id", "product_category.product_id")
         }).where("product_category.category_id", req.params.category_id).limit(req.query.limit).offset((req.query.page - 1) * req.query.limit)
         .then((data) => {
-            res.send({ counts: 18, rows: data })
+            for (i in data) {
+                if (req.query.description_length != undefined) {
+                    data[i]["description"] = data[i]["description"].slice(0, data[i]["description"].length - (data[i]["description"].length - req.query.description_length))
+                } else {
+                    data[i]["description"] = data[i]["description"]
+                }
+            }
+            res.send({
+                count: 18,
+                rows: data
+            })
         })
 }
 
 
 products_by_department_id = (req, res) => {
-    var body = req.query;
-    var limit = body.limit;
-    var des = req.description_length;
-    knexcon.select("*").from("category").join("product_category", function() {
-            this.on("category.category_id", "product_category.category_id")
-        }).join('product', function() {
-            this.on("product_category.product_id", "product.product_id")
-        }).where("department_id", req.params.department_id).limit(limit).offset((req.query.page - 1) * req.query.limit)
+    knexcon.select("product.product_id", "product.name", "product.description", "product.price", "product.discounted_price", "product.thumbnail").from("product").join("product_category", "product_category.product_id", "=", "product.product_id").
+    join("category", "category.category_id", "=", "product_category.category_id")
+        .where("department_id", req.params.department_id).limit(req.query.limit).offset((req.query.page - 1) * req.query.limit)
         .then((data) => {
-            var out = []
-            for (var i of data) {
-                var dic = {
-                    "product_id": i.product_id,
-                    "name": i.name,
-                    "description": i.description,
-                    "price": i.price,
-                    "discounted_price": i.discounted_price,
-                    "thumbnail": i.thumbnail
+            for (i in data) {
+                if (req.query.description_length != undefined) {
+                    data[i]["description"] = data[i]["description"].slice(0, data[i]["description"].length - (data[i]["description"].length - req.query.description_length))
+                } else {
+                    data[i]["description"] = data[i]["description"]
                 }
-                out.push(dic)
             }
-            res.send({ counts: 16, rows: out })
+            res.send({
+                count: 16,
+                rows: data
+            })
         })
 }
 product_by_details = (req, res) => {
